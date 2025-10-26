@@ -57,7 +57,7 @@ check_dns_server() {
 
 # Function to get current configuration state
 get_current_config() {
-    local current_dns_server=$(uci get podkop.main.dns_server 2>/dev/null)
+    local current_dns_server=$(uci get podkop.settings.dns_server 2>/dev/null)
     
     if [ "$current_dns_server" = "$PRIMARY_DNS_SERVER" ]; then
         echo "available"
@@ -72,10 +72,10 @@ get_current_config() {
 apply_available_config() {
     log_message "Applying configuration for available DNS server ($PRIMARY_DNS_SERVER)" "info"
     
-    uci set podkop.main.dns_type='udp'
-    uci set podkop.main.dns_server="$PRIMARY_DNS_SERVER"
-    uci set podkop.main.dns_bind_interface='1'
-    uci set podkop.main.dns_interface="$DNS_INTERFACE"
+    uci set podkop.settings.dns_type='udp'
+    uci set podkop.settings.dns_server="$PRIMARY_DNS_SERVER"
+    uci set podkop.settings.dns_bind_interface='1'
+    uci set podkop.settings.dns_interface="$DNS_INTERFACE"
     
     if uci commit podkop; then
         log_message "Configuration committed successfully" "info"
@@ -99,10 +99,10 @@ apply_available_config() {
 apply_unavailable_config() {
     log_message "Applying configuration for unavailable DNS server ($BACKUP_DNS_SERVER)" "info"
     
-    uci del podkop.main.dns_interface 2>/dev/null
-    uci set podkop.main.dns_type='doh'
-    uci set podkop.main.dns_server="$BACKUP_DNS_SERVER"
-    uci set podkop.main.dns_bind_interface='0'
+    uci del podkop.settings.dns_interface 2>/dev/null
+    uci set podkop.settings.dns_type='doh'
+    uci set podkop.settings.dns_server="$BACKUP_DNS_SERVER"
+    uci set podkop.settings.dns_bind_interface='0'
     
     if uci commit podkop; then
         log_message "Configuration committed successfully" "info"
