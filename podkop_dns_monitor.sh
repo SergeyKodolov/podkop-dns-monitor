@@ -9,6 +9,7 @@ BACKUP_DNS_SERVER="dns.adguard-dns.com"
 DNS_INTERFACE="YOUR_PRIMARY_DNS_INTERFACE"
 TEST_DOMAIN="google.com"
 LOG_TAG="podkop-dns-monitor"
+LOG_LEVEL="info" # Will be set by install script. Can be debug, info, warn, err
 
 # Telegram settings (will be set by install script)
 TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN_HERE"
@@ -17,9 +18,30 @@ TELEGRAM_CHAT_ID="YOUR_CHAT_ID_HERE"
 # Function to log messages
 log_message() {
     local message="$1"
-    local level="$2"
-    echo "$(date): $message"
-    logger -t "$LOG_TAG" -p "daemon.$level" "$message"
+    local log_level="${2:-info}" # debug, info, warn, err
+    
+    # Get numeric level for the message
+    local level_num=$(get_log_level_num "$log_level")
+    
+    # Get numeric level from config
+    local config_level_num=$(get_log_level_num "${LOG_LEVEL:-info}")
+    
+    # Log message if its level is >= the configured log level
+    if [ "$level_num" -ge "$config_level_num" ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S'): [${log_level}] $message"
+        logger -t "${LOG_TAG:-script}" -p "daemon.${log_level}" "$message"
+    fi
+}
+
+# Helper function to convert log level to number
+get_log_level_num() {
+    case "$1" in
+        debug) echo 0 ;;
+        info)  echo 1 ;;
+        warn)  echo 2 ;;
+        err)   echo 3 ;;
+        *)     echo 1 ;; # Default to INFO
+    esac
 }
 
 # Function to send Telegram notification
@@ -32,12 +54,12 @@ send_telegram() {
             -d text="$formatted_message" \
             -d parse_mode="HTML" > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-            log_message "Telegram notification sent successfully" "info"
+            log_message "Telegram notification sent successfully" "debug"
         else
             log_message "Failed to send Telegram notification" "warn"
         fi
     else
-        log_message "Telegram not configured, skipping notification" "info"
+        log_message "Telegram not configured, skipping notification" "debug"
     fi
 }
 
@@ -124,7 +146,7 @@ apply_unavailable_config() {
 
 # Main logic
 main() {
-    log_message "Starting DNS monitoring check" "info"
+    log_message "Starting DNS monitoring check" "debug"
     
     current_config=$(get_current_config)
     log_message "Current configuration state: $current_config" "debug"
@@ -147,7 +169,7 @@ main() {
         fi
     fi
     
-    log_message "DNS monitoring check completed" "info"
+    log_message "DNS monitoring check completed" "debug"
 }
 
 # Run main function

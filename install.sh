@@ -120,6 +120,24 @@ collect_config() {
     printf "> "
     read user_test_domain
     TEST_DOMAIN=${user_test_domain:-"google.com"}
+
+    # Log Level
+    while [ -z "$LOG_LEVEL" ]; do
+        print_message "$YELLOW" "Enter desired log level (debug, info, warn, err) [default: info]:"
+        printf "> "
+        read user_log_level
+        LOG_LEVEL=${user_log_level:-"info"}
+        case $(echo "$LOG_LEVEL") in
+            "debug"|"info"|"warn"|"err")
+                # Valid level, break loop
+                break
+                ;;
+            *)
+                print_message "$RED" "Invalid log level. Please choose from debug, info, warn, or err."
+                LOG_LEVEL="" # Reset for re-looping
+                ;;
+        esac
+    done
     
     # Backup DNS Server
     print_message "$YELLOW" "Enter Backup DNS Server [default: dns.adguard-dns.com]:"
@@ -133,6 +151,7 @@ collect_config() {
     print_message "$GREEN" "- Backup DNS: $BACKUP_DNS_SERVER"
     print_message "$GREEN" "- DNS Interface: $DNS_INTERFACE"
     print_message "$GREEN" "- Test Domain: $TEST_DOMAIN"
+    print_message "$GREEN" "- Log Level: $LOG_LEVEL"
     print_message "$GREEN" "- Telegram Bot Token: ${TELEGRAM_BOT_TOKEN:0:10}..."
     print_message "$GREEN" "- Telegram Chat ID: $TELEGRAM_CHAT_ID"
     print_message "$YELLOW" ""
@@ -176,6 +195,7 @@ configure_script() {
     sed -i "s/BACKUP_DNS_SERVER=\".*\"/BACKUP_DNS_SERVER=\"$BACKUP_DNS_SERVER\"/" "$SCRIPT_NAME"
     sed -i "s/DNS_INTERFACE=\".*\"/DNS_INTERFACE=\"$DNS_INTERFACE\"/" "$SCRIPT_NAME"
     sed -i "s/TEST_DOMAIN=\".*\"/TEST_DOMAIN=\"$TEST_DOMAIN\"/" "$SCRIPT_NAME"
+    sed -i "s/LOG_LEVEL=\".*\"/LOG_LEVEL=\"$LOG_LEVEL\"/" "$SCRIPT_NAME"
     sed -i "s/TELEGRAM_BOT_TOKEN=\".*\"/TELEGRAM_BOT_TOKEN=\"$TELEGRAM_BOT_TOKEN\"/" "$SCRIPT_NAME"
     sed -i "s/TELEGRAM_CHAT_ID=\".*\"/TELEGRAM_CHAT_ID=\"$TELEGRAM_CHAT_ID\"/" "$SCRIPT_NAME"
     sed -i "s/LOG_TAG=\".*\"/LOG_TAG=\"$LOG_TAG\"/" "$SCRIPT_NAME"
